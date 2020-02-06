@@ -37,7 +37,8 @@ let serial = {};
 
   serial.Port.prototype.connect = function() {
     let readLoop = () => {
-      this.device_.transferIn(this.endpointIn_, 64).then(
+      this.device_.transferIn(this.endpointIn_, 64)
+      .then(
         result => {
           this.onReceive(result.data);
           readLoop();

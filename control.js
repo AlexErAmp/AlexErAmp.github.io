@@ -1,27 +1,34 @@
 (function() {
   "use strict";
 
+  function toBytesInt32(num) {
+    let arr = new Uint8Array([
+      (num & 0xff000000) >> 24,
+      (num & 0x00ff0000) >> 16,
+      (num & 0x0000ff00) >> 8,
+      (num & 0x000000ff)
+    ]);
+    return arr;
+  }
+  function displayMessage(selector, msg) {
+    $(selector).html(msg);
+    $(selector).fadeIn();
+    setTimeout(function() {
+      $(selector).fadeOut();
+    }, 4000);
+  }
+
   document.addEventListener("DOMContentLoaded", event => {
     let connectButton = document.querySelector("#connect");
     let statusDisplay = document.querySelector("#status");
     let brightnessSlider = document.querySelector("#brightness");
     let port;
 
-    function toBytesInt32(num) {
-      let arr = new Uint8Array([
-        (num & 0xff000000) >> 24,
-        (num & 0x00ff0000) >> 16,
-        (num & 0x0000ff00) >> 8,
-        num & 0x000000ff
-      ]);
-      return arr;
-    }
-
     function connect() {
       port.connect().then(
         () => {
-          statusDisplay.textContent = "";
-          connectButton.value = "Disconnect";
+          displayMessage("#status", "Connection successful");
+          connectButton.innerHTML = "Disconnect";
 
           port.onReceive = data => {
             let textDecoder = new TextDecoder();
@@ -32,9 +39,12 @@
           };
         },
         error => {
-          statusDisplay.textContent = error;
+          displayMessage("#status", error);
         }
-      );
+      )
+      .then(() => {
+        setTimeout(onUpdate, 1000);
+      });
     }
 
     function onUpdate() {
@@ -52,8 +62,8 @@
     connectButton.addEventListener("click", function() {
       if (port) {
         port.disconnect();
-        connectButton.value = "Connect";
-        statusDisplay.textContent = "";
+        connectButton.innerHTML = "Connect";
+        displayMessage("#status", "Connection closed");
         port = null;
       } else {
         serial
@@ -63,18 +73,18 @@
             connect();
           })
           .catch(error => {
-            statusDisplay.textContent = error;
+            displayMessage("#status", error);
           });
       }
     });
 
     serial.getPorts().then(ports => {
       if (ports.length == 0) {
-        statusDisplay.textContent = "No device found.";
+        displayMessage("#status", "No device found.");
       } else {
-        statusDisplay.textContent = "Connecting...";
+        displayMessage("#status","Connecting...");
         port = ports[0];
-        connect();
+        setTimeout(connect, 2000);
       }
     });
   });
