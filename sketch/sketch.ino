@@ -18,30 +18,30 @@ int brightnessArr[4];
 int brightnessIndex;
 
 void setup() {
-  while (!Serial) {
-    ;
-  }
-  Serial.begin(9600);
-  Serial.write("Sketch begins.\r\n");
-  Serial.flush();
-  brightnessIndex = 0;
+    while (!Serial) {
+        ;
+    }
+    Serial.begin(9600);
+    Serial.write("Sketch begins.\r\n");
+    Serial.flush();
+    brightnessIndex = 0;
 }
 
 void loop() {
-  if (Serial && Serial.available()) {
-    brightnessArr[brightnessIndex++] = Serial.read();
-    if (brightnessIndex == 4) {
-      brightness = 0;
-      for (int i = 0; i < 4; i++) {
-        int shift = (4 - 1 - i) * 8;
-        brightness += (brightnessArr[i] & 0x000000FF) << shift;
-      }
-      analogWrite(redPin, brightness);
-      Serial.print("Set brightness to ");
-      Serial.print(brightness);
-      Serial.print(".\r\n");
-      Serial.flush();
-      brightnessIndex = 0;
+    if (Serial && Serial.available()) {
+        brightnessArr[brightnessIndex++] = Serial.read();
+        if (brightnessIndex == 4) {
+            brightness = 0;
+            for (int i = 0; i < 4; i++) {
+                int shift = (4 - 1 - i) * 8;
+                brightness += (brightnessArr[i] & 0x000000FF) << shift;
+            }
+            analogWrite(redPin, brightness);
+            Serial.print("Set brightness to ");
+            Serial.print(brightness);
+            Serial.print(".\r\n");
+            Serial.flush();
+            brightnessIndex = 0;
+        }
     }
-  }
 }
