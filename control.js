@@ -6,7 +6,7 @@
       (num & 0xff000000) >> 24,
       (num & 0x00ff0000) >> 16,
       (num & 0x0000ff00) >> 8,
-      (num & 0x000000ff)
+      num & 0x000000ff
     ]);
     return arr;
   }
@@ -25,26 +25,29 @@
     let port;
 
     function connect() {
-      port.connect().then(
-        () => {
-          displayMessage("#status", "Connection successful");
-          connectButton.innerHTML = "Disconnect";
-
-          port.onReceive = data => {
-            let textDecoder = new TextDecoder();
-            console.log(textDecoder.decode(data));
-          };
-          port.onReceiveError = error => {
-            console.error(error);
-          };
-        },
-        error => {
-          displayMessage("#status", error);
-        }
-      )
-      .then(() => {
-        setTimeout(onUpdate, 1000);
-      });
+      port
+        .connect()
+        .then(
+          () => {
+            displayMessage("#status", "Connection successful");
+            connectButton.innerHTML = "Disconnect";
+            connectButton.disabled = false;
+            port.onReceive = data => {
+              let textDecoder = new TextDecoder();
+              console.log(textDecoder.decode(data));
+            };
+            port.onReceiveError = error => {
+              console.error(error);
+            };
+          },
+          error => {
+            displayMessage("#status", error);
+            connectButton.disabled = false;
+          }
+        )
+        .then(() => {
+          setTimeout(onUpdate, 1000);
+        });
     }
 
     function onUpdate() {
@@ -61,16 +64,21 @@
 
     connectButton.addEventListener("click", function() {
       if (port) {
-        port.disconnect();
-        connectButton.innerHTML = "Connect";
-        displayMessage("#status", "Connection closed");
-        port = null;
+        connectButton.disabled = true;
+        port.disconnect().then(() => {
+          connectButton.innerHTML = "Connect";
+          connectButton.disabled = false;
+          displayMessage("#status", "Connection closed");
+          port = null;
+        });
       } else {
         serial
           .requestPort()
           .then(selectedPort => {
             port = selectedPort;
-            connect();
+            displayMessage("#status", "Connecting...");
+            connectButton.disabled = true;
+            setTimeout(connect, 2000);
           })
           .catch(error => {
             displayMessage("#status", error);
@@ -82,8 +90,9 @@
       if (ports.length == 0) {
         displayMessage("#status", "No device found.");
       } else {
-        displayMessage("#status","Connecting...");
         port = ports[0];
+        displayMessage("#status", "Connecting...");
+        connectButton.disabled = true;
         setTimeout(connect, 2000);
       }
     });
